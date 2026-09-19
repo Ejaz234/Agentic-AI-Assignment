@@ -3,7 +3,7 @@ from dotenv import load_dotenv
 from pinecone import Pinecone
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_community.embeddings import FastEmbedEmbeddings
 
 load_dotenv()
 
@@ -22,10 +22,9 @@ chunks = text_splitter.split_documents(documents)
 print(f"Total chunks: {len(chunks)}")
 
 
-embeddings = HuggingFaceEmbeddings(
-    model_name="sentence-transformers/all-MiniLM-L6-v2"
+embeddings = FastEmbedEmbeddings(
+    model_name="BAAI/bge-small-en-v1.5"
 )
-
 
 pc = Pinecone(api_key=os.getenv("PINECONE_API_KEY"))
 

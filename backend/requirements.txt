@@ -5,7 +5,7 @@ langgraph
 langchain-groq
 langchain-huggingface
 pinecone
-sentence-transformers
+fastembed
 pypdf
 fastapi
 uvicorn
