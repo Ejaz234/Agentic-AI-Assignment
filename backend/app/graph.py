@@ -12,7 +12,6 @@ load_dotenv()
 
 # 1. Define Graph State
 
-
 class RAGState(TypedDict):
     question: str
     context: list
@@ -20,18 +19,25 @@ class RAGState(TypedDict):
     score: float
 
 
+# 2. Lazy Initialize Embeddings
+# The model will only load when a question is asked.
+# This helps Render start the FastAPI server without delay.
 
-# 2. Initialize Embeddings
+_embeddings = None
 
 
-embeddings = HuggingFaceEmbeddings(
-    model_name="sentence-transformers/all-MiniLM-L6-v2"
-)
+def get_embeddings():
+    global _embeddings
 
+    if _embeddings is None:
+        _embeddings = HuggingFaceEmbeddings(
+            model_name="sentence-transformers/all-MiniLM-L6-v2"
+        )
+
+    return _embeddings
 
 
 # 3. Connect to Pinecone
-
 
 pc = Pinecone(
     api_key=os.getenv("PINECONE_API_KEY")
@@ -40,9 +46,7 @@ pc = Pinecone(
 index = pc.Index("agentic-ai")
 
 
-
 # 4. Initialize Groq
-
 
 llm = ChatGroq(
     model="openai/gpt-oss-120b",
@@ -50,19 +54,19 @@ llm = ChatGroq(
 )
 
 
-
 # 5. Similarity Threshold
-
 
 SIMILARITY_THRESHOLD = 0.3
 
 
 # 6. Retrieve Node
 
-
 def retrieve(state: RAGState):
 
     question = state["question"]
+
+    # Load embeddings only when needed
+    embeddings = get_embeddings()
 
     # Convert question into embedding
     query_vector = embeddings.embed_query(question)
@@ -109,9 +113,7 @@ def retrieve(state: RAGState):
     }
 
 
-
 # 7. Generate Node
-
 
 def generate(state: RAGState):
 
@@ -160,9 +162,7 @@ Answer:
     }
 
 
-
 # 8. Build LangGraph
-
 
 graph_builder = StateGraph(RAGState)
 
@@ -176,9 +176,7 @@ graph_builder.add_edge("generate", END)
 graph = graph_builder.compile()
 
 
-
 # 9. Test the Graph
-
 
 if __name__ == "__main__":
 
